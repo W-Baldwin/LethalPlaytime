@@ -1,0 +1,103 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\LethalPlaytime.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\LethalPlaytime.csproj": {
+      "version": "1.2.2",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\LethalPlaytime.csproj",
+        "projectName": "Nuclear_Fox.LethalPlaytime",
+        "projectPath": "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\LethalPlaytime.csproj",
+        "packagesPath": "C:\\Users\\wesle\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\wesle\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.1"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.bepinex.dev/v3/index.json": {},
+          "https://nuget.bepinex.dev/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.1": {
+            "targetAlias": "netstandard2.1",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
+          "dependencies": {
+            "BepInEx.Analyzers": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.*, )"
+            },
+            "BepInEx.AssemblyPublicizer.MSBuild": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[0.4.2, )"
+            },
+            "BepInEx.Core": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[5.*, )"
+            },
+            "BepInEx.PluginInfoProps": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.*, )"
+            },
+            "Evaisa.LethalLib": {
+              "target": "Package",
+              "version": "[0.16.1, )"
+            },
+            "LethalCompany.GameLibs.Steam": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[*-*, )"
+            },
+            "UnityEngine.Modules": {
+              "include": "Compile",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2022.3.9, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "NETStandard.Library": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.403\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

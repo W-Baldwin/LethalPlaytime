@@ -1,0 +1,12 @@
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\bin\Debug\netstandard2.1\Nuclear_Fox.LethalPlaytime.deps.json
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\bin\Debug\netstandard2.1\Nuclear_Fox.LethalPlaytime.dll
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\bin\Debug\netstandard2.1\LethalConfig.dll
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.csproj.AssemblyReference.cache
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\MyPluginInfo.cs
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.AssemblyInfoInputs.cache
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.AssemblyInfo.cs
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.csproj.CoreCompileInputs.cache
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.csproj.CopyComplete
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\Nuclear_Fox.LethalPlaytime.dll
+C:\Users\wesle\source\repos\LethalPlaytime\LethalPlaytime\obj\Debug\netstandard2.1\LethalPlaytime.IgnoresAccessChecksTo.cs
