@@ -17,10 +17,9 @@ namespace LethalPlaytime
 {
     public class BoxyBooAI : EnemyAI
     {
-
         private System.Random rng;
         private AISearchRoutine boxySearchRoutine;
-        private enum BoxyStates { BasicSearch, AdvancedSearch, BasicChase, AdvancedChase, Box, Jumpscare, Leap, Armgrab};
+        private enum BoxyStates { BasicSearch, AdvancedSearch, BasicChase, AdvancedChase, Box, Jumpscare, Leap, Armgrab, Retreat};
         private enum CrankStates { WindUp, Static, NormalSpin, FastSpin }
 
         private CrankStates crankState;
@@ -112,12 +111,24 @@ namespace LethalPlaytime
         //GrabStuff
         public int numGrabs = 1;
         private int angleOffsetGrab = 45;
-        private static readonly float maxTimeAimingGrab = 0.8f;  //TO-DO lower
+        private static readonly float maxTimeAimingGrab = 0.6f;  //TO-DO lower
         public float timeAimingGrab = 0;
 
         //Jumpscare Stuff
+        public bool grabbedPlayer = false;
+        public bool checkingArmCollision = false;
         public Transform jumpscareAttachPoint;
         private ulong jumpscareClientID;
+        public BoxCollider jumpscareCollision;
+        public Coroutine jumpscare;
+
+        //Retreat stuff
+        Vector3 retreatPosition;
+        private readonly float maxRetreatTime = 30f;
+        public float retreatTime = 0;
+        public float trackedDamage = 0;
+        public bool shouldEnterRetreat = false;
+        public readonly float maxTrackedDamaged = 8f;
 
 
         public override void Start()
@@ -135,6 +146,8 @@ namespace LethalPlaytime
             {
                 ChangeOwnershipOfEnemy(StartOfRound.Instance.allPlayerScripts[0].actualClientId);
             }
+            retreatPosition = transform.position;
+            debugEnemyAI = true; //REMOVE ME
         }
 
         public void Awake()
@@ -288,7 +301,7 @@ namespace LethalPlaytime
                             {
                                 if (!Physics.Linecast(eye.transform.position, targetPlayer.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault))
                                 {
-                                    SwitchToBehaviourState((int)BoxyStates.Armgrab);                                   
+                                    SwitchToBehaviourState((int)BoxyStates.Armgrab);
                                     BoxyBooSendStringClientRcp("SwitchToGrab");
                                     return;
                                 }
@@ -307,7 +320,6 @@ namespace LethalPlaytime
                                     bool leftCheck = Physics.Linecast(leftsideCheck.position, targetPlayer.playerEye.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
                                     bool rightCheck = Physics.Linecast(rightsideCheck.position, targetPlayer.playerEye.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
 
-                                    debugEnemyAI = true; //REMOVE ME
                                     if (debugEnemyAI)
                                     {
                                         Debug.Log("Leftcheck: " + leftCheck);
@@ -367,7 +379,14 @@ namespace LethalPlaytime
                     }
 
                     break;
-                case (int)BoxyStates.Jumpscare: 
+                case (int)BoxyStates.Jumpscare:
+/*                    if (!jumpscaring)
+                    {
+                        Debug.Log("Boxy: Switching State Jumpscare -> Box");
+                        targetPlayer = null;
+                        SwitchToBehaviourState((int)BoxyStates.Box);
+                        BoxyBooSendStringClientRcp("SwitchToBox");
+                    }*/
                     break;
                 case (int)BoxyStates.Leap:
 /*                    if (numJumps < 1)
@@ -380,7 +399,19 @@ namespace LethalPlaytime
                     {
                         SwitchToBehaviourState((int)BoxyStates.AdvancedSearch); //REMOVE ME
                         BoxyBooSendStringClientRcp("SwitchToAdvancedSearch");
+                        return;
                     }
+                    break;
+                case (int)BoxyStates.Retreat:
+                    if (Vector3.Distance(transform.position, retreatPosition) < 1.5 || retreatTime > maxRetreatTime)
+                    {
+                        retreatTime = 0;
+                        targetPlayer = null;
+                        SwitchToBehaviourState((int)BoxyStates.Box);
+                        BoxyBooSendStringClientRcp("SwitchToBox");
+                        return;
+                    }
+                    SetDestinationToPosition(retreatPosition);
                     break;
             }
         }
@@ -400,8 +431,21 @@ namespace LethalPlaytime
 
             if (IsHost || IsServer)
             {
+                UpdateRetreatCheck();
                 UpdateWalking();
                 UpdateNavMesh();
+                CheckArmCollision();
+            }
+        }
+
+        private void UpdateRetreatCheck()
+        {
+            if (!attacking && shouldEnterRetreat && (currentBehaviourStateIndex == (int)BoxyStates.BasicSearch || currentBehaviourStateIndex == (int)BoxyStates.AdvancedSearch || currentBehaviourStateIndex == (int)BoxyStates.BasicChase || currentBehaviourStateIndex == (int)BoxyStates.AdvancedChase))
+            {
+                shouldEnterRetreat = false;
+                trackedDamage = 0;
+                SwitchToBehaviourState((int)BoxyStates.Retreat);
+                BoxyBooSendStringClientRcp("SwitchToRetreat");
             }
         }
 
@@ -457,7 +501,7 @@ namespace LethalPlaytime
                         Quaternion targetLook = Quaternion.LookRotation(diff);
                         Quaternion offset = Quaternion.Euler(0, 7, 0);
                         Quaternion targetLookWithOffset = targetLook * offset;
-                        transform.rotation = Quaternion.Slerp(transform.rotation, targetLookWithOffset, Time.deltaTime * 5f);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetLookWithOffset, Time.deltaTime * 20f);
                     }
                     if (timeAimingGrab > -0.5)
                     {
@@ -470,12 +514,6 @@ namespace LethalPlaytime
                     }
                     break;
             }
-        }
-
-        private IEnumerator jumpscare()
-        {
-
-            yield return null;
         }
 
         private IEnumerator Leap()
@@ -683,6 +721,15 @@ namespace LethalPlaytime
 
         }
 
+        private void SwitchToRetreat()
+        {
+            if (boxySearchRoutine.inProgress)
+            {
+                StopSearch(boxySearchRoutine);
+            }
+            agent.speed = 5.5f;
+        }
+
         private void SwitchToBox()
         {
             musicAudio.clip = null;
@@ -701,18 +748,17 @@ namespace LethalPlaytime
             partial = false;
             full = true;
             UpdateAnimationState();
-            agent.speed = 4;
+            agent.speed = 4.5f;
         }
 
         private void SwitchToPartial()
         {
+            musicAudio.clip = null;
             box = false;
             partial = true;
             full = false;
             UpdateAnimationState();
-            agent.speed = 0;
-            agent.velocity = Vector3.zero;
-            crankState = CrankStates.WindUp;
+            crankState = CrankStates.Static;
         }
 
         private void UpdateAnimationState()
@@ -793,6 +839,7 @@ namespace LethalPlaytime
                     spinSpeed = 90;
                     break;
                 case CrankStates.Static:
+                    spinSpeed = 0;
                     break;
                 case CrankStates.NormalSpin:
                     spinSpeed = -270;
@@ -893,7 +940,16 @@ namespace LethalPlaytime
                 landingPosition = new Vector3(float.Parse(informationStringList[0]), float.Parse(informationStringList[1]), float.Parse(informationStringList[2]));
                 return;
             }
-            if (!IsHost && DebugEnemy)
+            if (informationString.Contains("Jumpscare:"))
+            {
+                Debug.Log("Boxy: Processing Jumpscare clientID");
+                informationString = informationString.Replace("Jumpscare:", "").Trim();
+                ulong clientID = (ulong)int.Parse(informationString);
+                creatureAnimator.SetBool("GrabbedTarget", true);
+                jumpscare =  StartCoroutine(GrabAndJumpscare(clientID));
+                return;
+            }
+            if (!IsHost && debugEnemyAI)
             {
                 Debug.Log("String received from host: " + informationString);
             }
@@ -956,6 +1012,10 @@ namespace LethalPlaytime
                         grabCooldown += 0.65f;
                         attackCooldown += 0.65f;
                     }
+                    break;
+                case "SwitchToRetreat":
+                    SwitchToRetreat();
+                    SwitchToPartial();
                     break;
             }
         }
@@ -1037,6 +1097,31 @@ namespace LethalPlaytime
             Debug.Log("Finished Boxy Grab");
         }
 
+        private void CheckArmCollision()
+        {
+            if (checkingArmCollision && IsHost && jumpscareCollision != null)
+            {
+                for (int i = 0; i < StartOfRound.Instance.allPlayerScripts.Length; i++)
+                {
+                    if (grabbedPlayer == false && !jumpscaring && StartOfRound.Instance.allPlayerScripts[i].GetComponent<BoxCollider>().bounds.Intersects(jumpscareCollision.bounds))
+                    {
+                        Debug.Log("Boxy: Arm Collided with player.");
+                        jumpscaring = true;
+                        grabbedPlayer = true;
+                        checkingArmCollision = false;
+                        ulong playerID = StartOfRound.Instance.allPlayerScripts[i].actualClientId;
+                        SwitchToBehaviourState((int)BoxyStates.Jumpscare);
+                        BoxyBooSendStringClientRcp("Jumpscare:" + playerID.ToString());
+                    }
+                }
+            }
+        }
+
+        public void SetArmGrabChech(bool value)
+        {
+            checkingArmCollision = value;
+        }
+
         public void EndJumpscare()
         {
             if (inSpecialAnimationWithPlayer != null)
@@ -1047,17 +1132,25 @@ namespace LethalPlaytime
                 inSpecialAnimationWithPlayer.DropBlood(Vector3.up);
                 inSpecialAnimationWithPlayer.DropBlood(Vector3.back);
                 inSpecialAnimationWithPlayer.DropBlood(Vector3.down);
-                inSpecialAnimationWithPlayer.DamagePlayer(10000, false, true, CauseOfDeath.Snipped, 1);
+                inSpecialAnimationWithPlayer.DamagePlayer(10000, false, true, CauseOfDeath.Unknown, 7);
                 inSpecialAnimationWithPlayer.inSpecialInteractAnimation = false;
                 inSpecialAnimationWithPlayer.snapToServerPosition = false;
                 inSpecialAnimationWithPlayer.disableLookInput = false;
                 inSpecialAnimationWithPlayer = null;
             }
-            Debug.Log("Would have ended Jumpscare here.");
+            grabbedPlayer = false;
+            jumpscaring = false;
+            creatureAnimator.SetBool("GrabbedTarget", false);
+            targetPlayer = null;
+            inSpecialAnimation = false;
+            SwitchToBehaviourState((int)BoxyStates.AdvancedSearch);
+            BoxyBooSendStringClientRcp("SwitchToAdvancedSearch");
+            Debug.Log("Boxy: Ended Jumpscare.");
         }
 
         private IEnumerator GrabAndJumpscare(ulong playerID)
         {
+            Debug.Log("Boxy: Beginning Jumpscare");
             agent.speed = 0;
             agent.velocity = Vector3.zero;
             inSpecialAnimationWithPlayer = StartOfRound.Instance.allPlayerScripts[playerID];
@@ -1072,11 +1165,11 @@ namespace LethalPlaytime
             }
             bool inArmGrab = true;
             float timeElapsed = 0;
-            while (inArmGrab == true && timeElapsed < 3.0f && inSpecialAnimationWithPlayer != null)
+            while (inArmGrab == true && timeElapsed < 2.0f && inSpecialAnimationWithPlayer != null)
             {
                 Vector3 diff2 = this.transform.position - targetPlayer.transform.position;
                 diff2.y = 0;
-                inSpecialAnimationWithPlayer.transform.position = jumpscareAttachPoint.position;
+                inSpecialAnimationWithPlayer.transform.position = jumpscareAttachPoint.position + Vector3.down;
                 inSpecialAnimationWithPlayer.transform.rotation = Quaternion.LookRotation(diff2);
                 inSpecialAnimationWithPlayer.ResetFallGravity();
                 if (creatureAnimator.GetAnimatorStateName(0, true) == "Boxy_Jumpscare")
@@ -1088,19 +1181,17 @@ namespace LethalPlaytime
             }
             bool inJumpscare = true;
             timeElapsed = 0f;
-            while (inJumpscare && timeElapsed < 3.0f && inSpecialAnimationWithPlayer != null)
+            while (inJumpscare && timeElapsed < 1.7f && inSpecialAnimationWithPlayer != null)
             {
                 Vector3 diff2 = this.transform.position - targetPlayer.transform.position;
                 diff2.y = 0;
-                inSpecialAnimationWithPlayer.transform.position = jumpscareAttachPoint.position;
+                inSpecialAnimationWithPlayer.transform.position = jumpscareAttachPoint.position + Vector3.down;
                 inSpecialAnimationWithPlayer.transform.rotation = Quaternion.LookRotation(diff2);
                 inSpecialAnimationWithPlayer.ResetFallGravity();
+                timeElapsed += Time.deltaTime;
+                yield return null;
             }
-        }
-
-        public void ArmCollidedGeometry()
-        {
-            creatureAnimator.speed = -1f;
+            //We end jumpscare with animation events.
         }
 
         //Send String information
@@ -1223,5 +1314,20 @@ namespace LethalPlaytime
                 RoundManager.PlayRandomClip(hitConnectAudio, jumpscareSounds, true, 3f);
             }
         }
+
+        public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1)
+        {
+            if (currentBehaviourStateIndex == (int)BoxyStates.Retreat)
+            {
+                return;
+            }
+            base.HitEnemy(force, playerWhoHit, playHitSFX, hitID);
+            trackedDamage += force;
+            if (IsHost && trackedDamage > maxTrackedDamaged)
+            {
+                shouldEnterRetreat = true;
+            }
+        }
+
     }
 }

@@ -313,7 +313,7 @@ namespace LethalPlaytime
             BoxyBooAI boxyBooAIScript = boxyBoo.enemyPrefab.AddComponent<BoxyBooAI>();
             boxyBooAIScript.creatureVoice = boxyBoo.enemyPrefab.GetComponent<AudioSource>();
             boxyBooAIScript.creatureSFX = boxyBoo.enemyPrefab.GetComponent<AudioSource>();
-            boxyBooAIScript.enemyBehaviourStates = new EnemyBehaviourState[8];
+            boxyBooAIScript.enemyBehaviourStates = new EnemyBehaviourState[9];
             boxyBooAIScript.AIIntervalTime = 0.1f;
             boxyBooAIScript.syncMovementSpeed = 0.2f;
             boxyBooAIScript.updatePositionThreshold = 0.2f;
@@ -341,6 +341,7 @@ namespace LethalPlaytime
 
             //JumpscarePoint
             boxyBooAIScript.jumpscareAttachPoint = FindDeepChild(boxyBoo.enemyPrefab.transform, "JumpscarePoint");
+            boxyBooAIScript.jumpscareCollision = boxyBooAIScript.jumpscareAttachPoint.GetComponent<BoxCollider>();
 
             //Audio Sources
             boxyBooAIScript.musicAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "MusicAudio").GetComponent<AudioSource>();

@@ -96,5 +96,21 @@ namespace LethalPlaytime
                 scriptReference.EndJumpscare();
             }
         }
+
+        public void SetArmGrabCheck(int value)
+        {
+            if (scriptReference != null)
+            {
+                if (value == 2)
+                {
+                    scriptReference.SetArmGrabChech(false);
+                }
+                else
+                {
+                    scriptReference.SetArmGrabChech(true);
+                }
+                
+            }
+        }
     }
 }

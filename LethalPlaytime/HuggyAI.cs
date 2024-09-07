@@ -564,10 +564,10 @@ namespace LethalPlaytime
                     agent.speed = 6.5f;
                     break;
                 case (int)HuggyStates.RegularChase:
-                    agent.speed = 4.5f;
+                    agent.speed = 5.5f;
                     break;
                 default:
-                    agent.speed = 3;
+                    agent.speed = 3.5f;
                     break;
             }
         }
@@ -575,7 +575,7 @@ namespace LethalPlaytime
         private void ResetAfterAttacking()
         {
             attacking = false;
-            agent.speed = 4.5f;
+            agent.speed = 5.5f;
         }
 
         private void SetStatsAfterRoaring()
@@ -590,8 +590,8 @@ namespace LethalPlaytime
             canJumpscare = false;
             openDoorSpeedMultiplier = 1;
             inSpecialAnimation = false;
-            agent.speed = 3.0f;
-            currentFrustration = 0;
+            agent.speed = 3.5f;
+            currentFrustration = 0.5f;
             standing = true;
             forward = true;
             running = false;
@@ -610,7 +610,7 @@ namespace LethalPlaytime
             sitting = false;
             standing = true;
             charging = false;
-            agent.speed = 3f;
+            agent.speed = 3.5f;
             changeInAnimationStateNeeded = true;
         }
 
@@ -628,7 +628,7 @@ namespace LethalPlaytime
             sitting = false;
             standing = false;
             changeInAnimationStateNeeded = true;
-            agent.speed = 3;
+            agent.speed = 3.5f;
 
         }
 
@@ -640,7 +640,7 @@ namespace LethalPlaytime
             running = true;
             atHidingPosition = false;
             changeInAnimationStateNeeded = true;
-            agent.speed = 4.5f;
+            agent.speed = 5.5f;
             currentWanderingTime = 0;
             TargetClosestPlayer();
             StopSearch(huggySearch);
@@ -953,7 +953,7 @@ namespace LethalPlaytime
 
         private IEnumerator WaitAfterJumpscare()
         {
-            yield return new WaitForSeconds(3.0f);
+            yield return new WaitForSeconds(1.0f);
             ResetAfterJumpscare();
             SwitchToBehaviourState((int)HuggyStates.Wandering);
         }
