@@ -348,8 +348,9 @@ namespace LethalPlaytime
             boxyBooAIScript.grabAudioPoint = FindDeepChild(boxyBoo.enemyPrefab.transform, "GrabAudio").GetComponent<AudioSource>();
             boxyBooAIScript.hitConnectAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "HitConnectAudio").GetComponent<AudioSource>();
             boxyBooAIScript.crankAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "CrankAudio").GetComponent<AudioSource>();
-            boxyBooAIScript.creekAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "CreekAudio").GetComponent<AudioSource>();
+            boxyBooAIScript.creakAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "CreakAudio").GetComponent<AudioSource>();
             boxyBooAIScript.jumpAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "JumpAudio").GetComponent<AudioSource>();
+            boxyBooAIScript.retractAudio = FindDeepChild(boxyBoo.enemyPrefab.transform, "RetractAudio").GetComponent<AudioSource>();
 
             //Audio Clips
             //Walking
@@ -435,6 +436,7 @@ namespace LethalPlaytime
 
             TerminalNode boxyBooTerminalNode = assetBundle.LoadAsset<TerminalNode>("Boxy Terminal Node");
             TerminalKeyword boxyBooTerminalKeyword = assetBundle.LoadAsset<TerminalKeyword>("Boxy Terminal Keyword");
+            LethalLib.Modules.Utilities.FixMixerGroups(boxyBoo.enemyPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(boxyBoo.enemyPrefab);
             LethalLib.Modules.Enemies.RegisterEnemy(boxyBoo, boxyBooMonsterRarity, chosenRegistrationMethod, boxyBooTerminalNode, boxyBooTerminalKeyword);
         }

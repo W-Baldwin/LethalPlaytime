@@ -36,8 +36,8 @@ namespace LethalPlaytime
         public bool jumpscaring = false;
 
         //Energy
-        public static readonly int maxEnergy = 25;
-        public static readonly int thresholdEnergy = 18;
+        public static readonly int maxEnergy = 250;
+        public static readonly int thresholdEnergy = 180;
         public float energy = 0;
         public bool reversing = false;
         private static readonly int maxCrankBackwardsTime = 3;
@@ -75,8 +75,9 @@ namespace LethalPlaytime
         public AudioSource hitConnectAudio;
         public AudioSource grabAudioPoint;
         public AudioSource musicAudio;
-        public AudioSource creekAudio;
+        public AudioSource creakAudio;
         public AudioSource jumpAudio;
+        public AudioSource retractAudio;
 
         //Audioclips
         public AudioClip[] walkSounds;
@@ -245,8 +246,8 @@ namespace LethalPlaytime
                     if (targetPlayer != null && !targetPlayer.isPlayerDead && targetPlayer.isInsideFactory && !targetPlayer.inAnimationWithEnemy)
                     {
                         float distanceToCurrentTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
-                        potentialTargetPlayer = CheckLineOfSightForClosestPlayer(120, 25);
-                        if (distanceToCurrentTargetPlayer < 1.9f && !attacking && attackCooldown <= 0) //ATTACK
+                        potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25);
+                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0) //ATTACK
                         {
                             AttackRandom();
                             return;
@@ -260,7 +261,7 @@ namespace LethalPlaytime
                     }
                     else
                     {
-                        potentialTargetPlayer = CheckLineOfSightForClosestPlayer(120, 25);
+                        potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25);
                         if (potentialTargetPlayer != null)
                         {
                             targetPlayer = potentialTargetPlayer;
@@ -299,7 +300,7 @@ namespace LethalPlaytime
                         float distanceToCurrentTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
                         potentialTargetPlayer = CheckLineOfSightForClosestPlayer(360, 25);
                         //Switch targets if there is a better target or needed.
-                        if (distanceToCurrentTargetPlayer < 1.9f && !attacking && attackCooldown <= 0) //ATTACK
+                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0) //ATTACK
                         {
                             AttackRandom();
                             return;
@@ -312,9 +313,9 @@ namespace LethalPlaytime
                         //Perform abilities
                         if (energy > 2)
                         {
-                            if (grabCooldown <= 0 && distanceToCurrentTargetPlayer < 3.25 && distanceToCurrentTargetPlayer > 1 && !agent.isOnOffMeshLink && (Math.Abs(transform.position.y - targetPlayer.transform.position.y)) < 1.25) 
+                            if (grabCooldown <= 0 && distanceToCurrentTargetPlayer < 3.25 && distanceToCurrentTargetPlayer > 0.6 && !agent.isOnOffMeshLink && (Math.Abs(transform.position.y - targetPlayer.transform.position.y)) < 1.25) 
                             {
-                                if (!Physics.Linecast(eye.transform.position, targetPlayer.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault))
+                                if (!Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault))
                                 {
                                     SwitchToBehaviourState((int)BoxyStates.Armgrab);
                                     BoxyBooSendStringClientRcp("SwitchToGrab");
@@ -378,7 +379,6 @@ namespace LethalPlaytime
                     }
                     break;
                 case (int)BoxyStates.Box:
-                    potentialTargetPlayer = null;
                     potentialTargetPlayer = CheckLineOfSightForPlayer(270, 7);
                     if (energy >= maxEnergy)
                     {
@@ -386,7 +386,7 @@ namespace LethalPlaytime
                         BoxyBooSendStringClientRcp("SwitchToAdvancedSearch");
                         return;
                     }
-                    else if (energy >= thresholdEnergy && potentialTargetPlayer != null)
+                    else if (energy >= thresholdEnergy && potentialTargetPlayer != null && Vector3.Distance(transform.position, potentialTargetPlayer.transform.position) < 7)
                     {
                         SwitchToBehaviourState((int)BoxyStates.BasicSearch);
                         BoxyBooSendStringClientRcp("SwitchToBasicSearch");
@@ -658,7 +658,7 @@ namespace LethalPlaytime
             partial = false;
             full = true;
             UpdateAnimationState();
-            agent.speed = 5;
+            agent.speed = 6.5f;
             attacking = false;
             attackCooldown = maxAttackCooldown * 1.5f;
             crankState = CrankStates.FastSpin;
@@ -693,7 +693,7 @@ namespace LethalPlaytime
                 partial = false;
                 full = true;
                 UpdateAnimationState();
-                agent.speed = 4;
+                agent.speed = 6;
                 crankState = CrankStates.NormalSpin;
             }
         }
@@ -913,7 +913,7 @@ namespace LethalPlaytime
             {
                 Debug.Log("Boxy: Tried to alert host to crank request");
             }
-            BoxyBooSendStringClientRcp("ClientCrank");
+            BoxyBooSendStringCrankRcp("ClientCrank");
         }
 
         public void CheckAttackArea()
@@ -929,39 +929,6 @@ namespace LethalPlaytime
             else
             {
                 PlayRandomSwingSound();
-            }
-        }
-
-        [ClientRpc]
-        private void BoxyBooSendStringClientRcp(string informationString)
-        {
-            NetworkManager networkManager = ((NetworkBehaviour)this).NetworkManager;
-            if (networkManager == null || !networkManager.IsListening)
-            {
-                return;
-            }
-            if ((int)__rpc_exec_stage != 2 && ((networkManager.IsServer || networkManager.IsHost) || informationString.Equals("ClientCrank")))
-            {
-                ClientRpcParams rpcParams = default(ClientRpcParams);
-                FastBufferWriter bufferWriter = __beginSendClientRpc(1245740165u, rpcParams, 0);
-                bool flag = informationString != null;
-                bufferWriter.WriteValueSafe(flag, default);
-                if (flag)
-                {
-                    bufferWriter.WriteValueSafe(informationString, false);
-                }
-                __endSendClientRpc(ref bufferWriter, 1245740165u, rpcParams, 0);
-            }
-            if ((int)__rpc_exec_stage == 2 && (networkManager.IsClient || networkManager.IsHost || IsServer))
-            {
-                if (!IsHost && !IsServer)
-                {
-                    InterpretRpcString(informationString);
-                }
-                else //Interpret same string differently on host or server if desired but usually not.
-                {
-                    InterpretRpcString(informationString);
-                }
             }
         }
 
@@ -1081,10 +1048,14 @@ namespace LethalPlaytime
             switch (currentBehaviourStateIndex)
             {
                 case (int)BoxyStates.AdvancedChase:
+                    agent.speed = 6.5f;
+                    break;
                 case (int)BoxyStates.AdvancedSearch:
                     agent.speed = 5;
                     break;
                 case (int)BoxyStates.BasicChase:
+                    agent.speed = 6.0f;
+                    break;
                 case (int)BoxyStates.BasicSearch:
                     agent.speed = 4;
                     break;
@@ -1110,7 +1081,7 @@ namespace LethalPlaytime
 
         private void CrankBackwardsHostProcess()
         {
-            Debug.Log($"CrankBackwardsHostProcess called. Host: {IsHost}, Server: {IsServer}, Energy: {energy}");
+            if (debugEnemyAI) { Debug.Log($"CrankBackwardsHostProcess called. Host: {IsHost}, Server: {IsServer}, Energy: {energy}"); }
             if (IsHost || IsServer)
             {
                 if (box && energy < 18)
@@ -1233,6 +1204,41 @@ namespace LethalPlaytime
             //We end jumpscare with animation events.
         }
 
+
+
+        [ClientRpc]
+        private void BoxyBooSendStringClientRcp(string informationString)
+        {
+            NetworkManager networkManager = ((NetworkBehaviour)this).NetworkManager;
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                return;
+            }
+            if ((int)__rpc_exec_stage != 2 && (networkManager.IsServer || networkManager.IsHost))
+            {
+                ClientRpcParams rpcParams = default(ClientRpcParams);
+                FastBufferWriter bufferWriter = __beginSendClientRpc(1245740165u, rpcParams, 0);
+                bool flag = informationString != null;
+                bufferWriter.WriteValueSafe(flag, default);
+                if (flag)
+                {
+                    bufferWriter.WriteValueSafe(informationString, false);
+                }
+                __endSendClientRpc(ref bufferWriter, 1245740165u, rpcParams, 0);
+            }
+            if ((int)__rpc_exec_stage == 2 && (networkManager.IsClient || networkManager.IsHost || IsServer))
+            {
+                if (!IsHost && !IsServer)
+                {
+                    InterpretRpcString(informationString);
+                }
+                else //Interpret same string differently on host or server if desired but usually not.
+                {
+                    InterpretRpcString(informationString);
+                }
+            }
+        }
+
         //Send String information
         private static void __rpc_handler_1245740165(NetworkBehaviour target, FastBufferReader reader, __RpcParams rpcParams)
         {
@@ -1252,10 +1258,70 @@ namespace LethalPlaytime
             }
         }
 
+
+        [ClientRpc]
+        private void BoxyBooSendStringCrankRcp(string informationString)
+        {
+            NetworkManager networkManager = ((NetworkBehaviour)this).NetworkManager;
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                return;
+            }
+            if ((int)__rpc_exec_stage != 2 && (networkManager.IsClient || networkManager.IsHost))
+            {
+                ClientRpcParams rpcParams = default(ClientRpcParams);
+                FastBufferWriter bufferWriter = __beginSendClientRpc(1245549521u, rpcParams, 0);
+                bool flag = informationString != null;
+                bufferWriter.WriteValueSafe(flag, default);
+                if (flag)
+                {
+                    bufferWriter.WriteValueSafe(informationString, false);
+                }
+                __endSendClientRpc(ref bufferWriter, 1245549521u, rpcParams, 0);
+            }
+            if ((int)__rpc_exec_stage == 2 && (networkManager.IsHost || IsServer))
+            {
+                if (IsHost || IsServer)
+                {
+                    InterpretClientCrank(informationString);
+                }
+            }
+        }
+
+        private void InterpretClientCrank(string informationString)
+        {
+            switch(informationString)
+            {
+                case "ClientCrank":
+                    if (IsHost) { CrankBackwardsHostProcess(); }
+                    break;
+            }
+        }
+
+        //Send String information
+        private static void __rpc_handler_1245549521(NetworkBehaviour target, FastBufferReader reader, __RpcParams rpcParams)
+        {
+            NetworkManager networkManager = target.NetworkManager;
+            if (networkManager != null && networkManager.IsListening)
+            {
+                bool flag = default(bool);
+                reader.ReadValueSafe(out flag, default);
+                string valueAsString = null;
+                if (flag)
+                {
+                    reader.ReadValueSafe(out valueAsString, false);
+                }
+                target.__rpc_exec_stage = (__RpcExecStage)2;
+                ((BoxyBooAI)target).BoxyBooSendStringCrankRcp(valueAsString);
+                target.__rpc_exec_stage = (__RpcExecStage)0;
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod]
         internal static void InitializeRPCS_BoxyBooAI()
         {
-            __rpc_func_table.Add(1245740165u, new RpcReceiveHandler(__rpc_handler_1245740165)); 
+            __rpc_func_table.Add(1245740165u, new RpcReceiveHandler(__rpc_handler_1245740165));
+            __rpc_func_table.Add(1245549521u, new RpcReceiveHandler(__rpc_handler_1245549521));
         }
 
         public void PlayRandomWalkSound()
@@ -1324,9 +1390,9 @@ namespace LethalPlaytime
 
         public void PlayRandomLeapSound()
         {
-            if (leapSounds != null && creatureSFX != null)
+            if (leapSounds != null && jumpAudio != null)
             {
-                RoundManager.PlayRandomClip(jumpAudio, leapSounds, true, 2);
+                RoundManager.PlayRandomClip(jumpAudio, leapSounds, true, 4);
             }
         }
 
@@ -1340,9 +1406,9 @@ namespace LethalPlaytime
 
         public void PlayRandomCreakSound()
         {
-            if (creakSounds != null && creekAudio != null)
+            if (creakSounds != null && creakAudio != null)
             {
-                RoundManager.PlayRandomClip(creekAudio, creakSounds, true, 3f);
+                RoundManager.PlayRandomClip(creakAudio, creakSounds, true, 3f);
             }
         }
 
@@ -1356,23 +1422,23 @@ namespace LethalPlaytime
 
         public void PlayRandomPartialRetractSound()
         {
-            if (partialRetractSounds != null && jumpAudio != null)
+            if (partialRetractSounds != null && retractAudio != null)
             {
-                RoundManager.PlayRandomClip(jumpAudio, partialRetractSounds, true, 2.5f);
+                RoundManager.PlayRandomClip(retractAudio, partialRetractSounds, true, 2.5f);
             }
         }
 
         public void PlayRandomFullRetractSound()
         {
-            if (fullRetractSounds != null && jumpAudio != null)
+            if (fullRetractSounds != null && retractAudio != null)
             {
-                RoundManager.PlayRandomClip(jumpAudio, fullRetractSounds, true, 2.5f);
+                RoundManager.PlayRandomClip(retractAudio, fullRetractSounds, true, 2.5f);
             }
         }
 
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1)
         {
-            if (currentBehaviourStateIndex == (int)BoxyStates.Retreat)
+            if (currentBehaviourStateIndex == (int)BoxyStates.Retreat || currentBehaviourStateIndex == (int)BoxyStates.Box)
             {
                 return;
             }

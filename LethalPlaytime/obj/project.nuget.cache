@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "N+vn5FnWB3axz7Lm9DdPcJCyH1i6xJzA9LYRiJKpv2PdXmNwIYSWVeewtsPNgt0rLRJTXg5RIo+++1yBzBMrHg==",
+  "dgSpecHash": "1mOYCpgBKC9JvYTfSfWZvcKNcEsS5CPF2DPXlvKx5HOMxppkB6iNpwlT/HfnKiHtz+Q7ySRzUCS/Uz5CGt2NpQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\wesle\\source\\repos\\LethalPlaytime\\LethalPlaytime\\LethalPlaytime.csproj",
   "expectedPackageFiles": [
@@ -11,7 +11,7 @@
     "C:\\Users\\wesle\\.nuget\\packages\\bepinex.plugininfoprops\\2.1.0\\bepinex.plugininfoprops.2.1.0.nupkg.sha512",
     "C:\\Users\\wesle\\.nuget\\packages\\evaisa.lethallib\\0.16.1\\evaisa.lethallib.0.16.1.nupkg.sha512",
     "C:\\Users\\wesle\\.nuget\\packages\\harmonyx\\2.7.0\\harmonyx.2.7.0.nupkg.sha512",
-    "C:\\Users\\wesle\\.nuget\\packages\\lethalcompany.gamelibs.steam\\60.0.0-ngd.0\\lethalcompany.gamelibs.steam.60.0.0-ngd.0.nupkg.sha512",
+    "C:\\Users\\wesle\\.nuget\\packages\\lethalcompany.gamelibs.steam\\62.0.1-ngd.0\\lethalcompany.gamelibs.steam.62.0.1-ngd.0.nupkg.sha512",
     "C:\\Users\\wesle\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\wesle\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "C:\\Users\\wesle\\.nuget\\packages\\mono.cecil\\0.11.4\\mono.cecil.0.11.4.nupkg.sha512",
