@@ -425,6 +425,13 @@ namespace LethalPlaytime
             boxyBooAIScript.jumpscareSounds = new AudioClip[1];
             boxyBooAIScript.jumpscareSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyJumpscare");
 
+            //Partial Retract Sounds
+            boxyBooAIScript.partialRetractSounds = new AudioClip[1];
+            boxyBooAIScript.partialRetractSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyRetractPartial");
+
+            //Full Retract sound
+            boxyBooAIScript.fullRetractSounds = new AudioClip[1];
+            boxyBooAIScript.fullRetractSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyRetractFull");
 
             TerminalNode boxyBooTerminalNode = assetBundle.LoadAsset<TerminalNode>("Boxy Terminal Node");
             TerminalKeyword boxyBooTerminalKeyword = assetBundle.LoadAsset<TerminalKeyword>("Boxy Terminal Keyword");

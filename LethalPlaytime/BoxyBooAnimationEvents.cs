@@ -82,6 +82,22 @@ namespace LethalPlaytime
             }
         }
 
+        public void PlayRandomPartialRetractSound()
+        {
+            if (scriptReference != null)
+            {
+                scriptReference.PlayRandomPartialRetractSound();
+            }
+        }
+
+        public void PlayRandomFullRetractSound()
+        {
+            if (scriptReference != null)
+            {
+                scriptReference.PlayRandomFullRetractSound();
+            }
+        }
+
         public void FinishGrab()
         {
             if (scriptReference != null)
