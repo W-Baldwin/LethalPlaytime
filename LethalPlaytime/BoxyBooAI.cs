@@ -36,8 +36,8 @@ namespace LethalPlaytime
         public bool jumpscaring = false;
 
         //Energy
-        public static readonly int maxEnergy = 250;
-        public static readonly int thresholdEnergy = 180;
+        public static readonly int maxEnergy = 26;
+        public static readonly int thresholdEnergy = 21;
         public float energy = 0;
         public bool reversing = false;
         private static readonly int maxCrankBackwardsTime = 3;
@@ -49,8 +49,8 @@ namespace LethalPlaytime
         public static readonly float maxGrabCooldown = 10;
         public static readonly float startLeapCooldown = 2000;
         public static readonly float startGrabCooldown = 2000;
-        public float leapCooldown = 3;
-        public float grabCooldown = 4;
+        public float leapCooldown = 5;
+        public float grabCooldown = 6;
 
         //Walking/Idle animations.
         public static readonly float maxTimeSinceMoving = 0.15f;
@@ -153,7 +153,7 @@ namespace LethalPlaytime
                 ChangeOwnershipOfEnemy(StartOfRound.Instance.allPlayerScripts[0].actualClientId);
             }
             retreatPosition = transform.position;
-            debugEnemyAI = true; //REMOVE ME
+            debugEnemyAI = false; //REMOVE ME
         }
 
         public void SetupStartTrigger()
@@ -909,11 +909,11 @@ namespace LethalPlaytime
 
         public void CrankBackwards(PlayerControllerB player)
         {
-            if (!IsClient && debugEnemyAI)
+            if (debugEnemyAI)
             {
-                Debug.Log("Boxy: Tried to alert host to crank request");
+                Debug.Log($"Boxy: Tried to alert host to crank request. Is client?: {IsClient}" );
             }
-            BoxyBooSendStringCrankRcp("ClientCrank");
+            BoxyBooSendStringCrankRpc("ClientCrank");
         }
 
         public void CheckAttackArea()
@@ -1084,7 +1084,7 @@ namespace LethalPlaytime
             if (debugEnemyAI) { Debug.Log($"CrankBackwardsHostProcess called. Host: {IsHost}, Server: {IsServer}, Energy: {energy}"); }
             if (IsHost || IsServer)
             {
-                if (box && energy < 18)
+                if (box && energy < 22)
                 {
                     energy -= 5;
                     if (energy < 0)
@@ -1259,30 +1259,31 @@ namespace LethalPlaytime
         }
 
 
-        [ClientRpc]
-        private void BoxyBooSendStringCrankRcp(string informationString)
+        [ServerRpc(RequireOwnership = false)]
+        private void BoxyBooSendStringCrankRpc(string informationString)
         {
             NetworkManager networkManager = ((NetworkBehaviour)this).NetworkManager;
-            if (networkManager == null || !networkManager.IsListening)
+            if (networkManager != null && networkManager.IsListening)
             {
-                return;
-            }
-            if ((int)__rpc_exec_stage != 2 && (networkManager.IsClient || networkManager.IsHost))
-            {
-                ClientRpcParams rpcParams = default(ClientRpcParams);
-                FastBufferWriter bufferWriter = __beginSendClientRpc(1245549521u, rpcParams, 0);
-                bool flag = informationString != null;
-                bufferWriter.WriteValueSafe(flag, default);
-                if (flag)
+                if ((int)((NetworkBehaviour)this).__rpc_exec_stage != 1 && (networkManager.IsClient || networkManager.IsHost))
                 {
-                    bufferWriter.WriteValueSafe(informationString, false);
+                    ServerRpcParams rpcParams = default(ServerRpcParams);
+                    FastBufferWriter bufferWriter = ((NetworkBehaviour)this).__beginSendServerRpc(1245549521u, rpcParams, (RpcDelivery)0);
+                    bool hasString = informationString != null;
+                    bufferWriter.WriteValueSafe(hasString);
+                    if (hasString)
+                    {
+                        bufferWriter.WriteValueSafe(informationString);
+                    }
+
+                    ((NetworkBehaviour)this).__endSendServerRpc(ref bufferWriter, 1245549521u, rpcParams, (RpcDelivery)0);
                 }
-                __endSendClientRpc(ref bufferWriter, 1245549521u, rpcParams, 0);
-            }
-            if ((int)__rpc_exec_stage == 2 && (networkManager.IsHost || IsServer))
-            {
-                if (IsHost || IsServer)
+                if ((int)((NetworkBehaviour)this).__rpc_exec_stage == 1 && (networkManager.IsServer || networkManager.IsHost))
                 {
+                    if (debugEnemyAI)
+                    {
+                        Debug.Log($"[Server] Processing on server with information: {informationString}");
+                    }
                     InterpretClientCrank(informationString);
                 }
             }
@@ -1290,10 +1291,15 @@ namespace LethalPlaytime
 
         private void InterpretClientCrank(string informationString)
         {
-            switch(informationString)
+            if (debugEnemyAI) { Debug.Log($"InterpretClientCrank tried to interpret the crank received.  IsClient? {IsClient}"); }
+            switch (informationString)
             {
                 case "ClientCrank":
-                    if (IsHost) { CrankBackwardsHostProcess(); }
+                    if (IsHost) 
+                    { 
+                        if (debugEnemyAI) { Debug.Log($"InterpretClientCrank tried to interpret the crank received.  IsClient? {IsClient}"); }
+                        CrankBackwardsHostProcess(); 
+                    }
                     break;
             }
         }
@@ -1311,8 +1317,8 @@ namespace LethalPlaytime
                 {
                     reader.ReadValueSafe(out valueAsString, false);
                 }
-                target.__rpc_exec_stage = (__RpcExecStage)2;
-                ((BoxyBooAI)target).BoxyBooSendStringCrankRcp(valueAsString);
+                target.__rpc_exec_stage = (__RpcExecStage)1;
+                ((BoxyBooAI)target).BoxyBooSendStringCrankRpc(valueAsString);
                 target.__rpc_exec_stage = (__RpcExecStage)0;
             }
         }
