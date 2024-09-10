@@ -136,6 +136,9 @@ namespace LethalPlaytime
         //Crank setup?
         private bool setupFinished = false;
 
+        //Box Collision
+        public BoxCollider boxCollision;
+
 
         public override void Start()
         {
@@ -198,7 +201,7 @@ namespace LethalPlaytime
                         StopSearch(boxySearchRoutine, false);
                         return;
                     }
-                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(110, 25);
+                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(130, 25);
                     if (potentialTargetPlayer != null && potentialTargetPlayer.isInsideFactory && !potentialTargetPlayer.isPlayerDead && !potentialTargetPlayer.inAnimationWithEnemy)
                     {
                         targetPlayer = potentialTargetPlayer;
@@ -258,6 +261,19 @@ namespace LethalPlaytime
                             targetPlayer = potentialTargetPlayer;
                         }
                         SetDestinationToPosition(targetPlayer.transform.position);
+                        float finalDistanceToCurrentTarget = Vector3.Distance(transform.position, targetPlayer.transform.position);
+                        bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
+                        if (lineOfSightToFinalTarget)
+                        {
+                            if (finalDistanceToCurrentTarget > 26)
+                            {
+                                targetPlayer = null;
+                            }
+                        }
+                        else if (finalDistanceToCurrentTarget > 20)
+                        {
+                            targetPlayer = null;
+                        }
                     }
                     else
                     {
@@ -300,11 +316,6 @@ namespace LethalPlaytime
                         float distanceToCurrentTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
                         potentialTargetPlayer = CheckLineOfSightForClosestPlayer(360, 25);
                         //Switch targets if there is a better target or needed.
-                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0) //ATTACK
-                        {
-                            AttackRandom();
-                            return;
-                        }
                         if (potentialTargetPlayer != targetPlayer && potentialTargetPlayer != null && Vector3.Distance(transform.position, potentialTargetPlayer.transform.position) < distanceToCurrentTargetPlayer)
                         {
                             TargetClosestPlayer(5, false);
@@ -352,7 +363,25 @@ namespace LethalPlaytime
                                 //Vector3 navMeshPosition = RoundManager.Instance.GetRandomNavMeshPositionInRadiusSpherical(closerPosition, 1, navHit);
                             }
                         }
+                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0) //ATTACK
+                        {
+                            AttackRandom();
+                            return;
+                        }
                         SetDestinationToPosition(targetPlayer.transform.position);
+                        float finalDistanceToCurrentTarget = Vector3.Distance(transform.position, targetPlayer.transform.position);
+                        bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
+                        if (lineOfSightToFinalTarget)
+                        {
+                            if (finalDistanceToCurrentTarget > 26)
+                            {
+                                targetPlayer = null;
+                            }
+                        }
+                        else if (finalDistanceToCurrentTarget > 20)
+                        {
+                            targetPlayer = null;
+                        }
                     }
                     else
                     {
@@ -767,6 +796,8 @@ namespace LethalPlaytime
             agent.speed = 0;
             agent.velocity = Vector3.zero;
             crankState = CrankStates.WindUp;
+            interactTrigger.enabled = true;
+            boxCollision.isTrigger = false;
         }
 
         private void SwitchToFull()
@@ -776,6 +807,8 @@ namespace LethalPlaytime
             full = true;
             UpdateAnimationState();
             agent.speed = 4.5f;
+            interactTrigger.enabled = false;
+            boxCollision.isTrigger = true;
         }
 
         private void SwitchToPartial()
@@ -786,6 +819,8 @@ namespace LethalPlaytime
             full = false;
             UpdateAnimationState();
             crankState = CrankStates.Static;
+            interactTrigger.enabled = false;
+            boxCollision.isTrigger = true;
         }
 
         private void UpdateAnimationState()

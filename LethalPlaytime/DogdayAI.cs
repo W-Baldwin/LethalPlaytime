@@ -118,14 +118,27 @@ namespace LethalPlaytime
                             targetPlayer = newPotentialTarget;
                         }
                         SetDestinationToPosition(targetPlayer.transform.position);
-                        if (Vector3.Distance(targetPlayer.transform.position, transform.position) < 1.4f && !attacking && attackCooldown <= 0)
+                        float distanceToFinalTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
+                        if (distanceToFinalTargetPlayer < 1.4f && !attacking && attackCooldown <= 0)
                         {
                             DogdaySendStringClientRcp("Attacking");
+                        }
+                        bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
+                        if (lineOfSightToFinalTarget)
+                        {
+                            if (distanceToFinalTargetPlayer > 26)
+                            {
+                                targetPlayer = null;
+                            }
+                        }
+                        else if (distanceToFinalTargetPlayer > 20)
+                        {
+                            targetPlayer = null;
                         }
                     }
                     else
                     {
-                        PlayerControllerB newPotentialTarget = CheckLineOfSightForClosestPlayer(150, 23);
+                        PlayerControllerB newPotentialTarget = CheckLineOfSightForClosestPlayer(180, 23);
                         if (newPotentialTarget != null)
                         {
                             targetPlayer = newPotentialTarget;

@@ -339,6 +339,9 @@ namespace LethalPlaytime
             //Attack COllision
             boxyBooAIScript.attackArea = FindDeepChild(boxyBoo.enemyPrefab.transform, "AttackArea").GetComponent<BoxCollider>();
 
+            //Box Collision
+            boxyBooAIScript.boxCollision = FindDeepChild(boxyBoo.enemyPrefab.transform, "cog_JNT").GetComponent<BoxCollider>();
+
             //JumpscarePoint
             boxyBooAIScript.jumpscareAttachPoint = FindDeepChild(boxyBoo.enemyPrefab.transform, "JumpscarePoint");
             boxyBooAIScript.jumpscareCollision = boxyBooAIScript.jumpscareAttachPoint.GetComponent<BoxCollider>();
