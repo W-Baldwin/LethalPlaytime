@@ -151,7 +151,7 @@ namespace LethalPlaytime
             {
                 musicAudio.clip = musicTrackSounds[0];
             }
-            if (!base.IsServer)
+            if (!base.IsServer && IsOwner)
             {
                 ChangeOwnershipOfEnemy(StartOfRound.Instance.allPlayerScripts[0].actualClientId);
             }
