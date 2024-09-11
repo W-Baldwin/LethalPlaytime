@@ -96,6 +96,7 @@ namespace LethalPlaytime
         public AudioClip[] jumpscareSounds;
         public AudioClip[] partialRetractSounds;
         public AudioClip[] fullRetractSounds;
+        public AudioClip[] hitConnectSlashSounds;
 
         //Soundvariables
         private float maxTimeBetweenCranks = 0.75f;
@@ -797,7 +798,10 @@ namespace LethalPlaytime
             agent.velocity = Vector3.zero;
             crankState = CrankStates.WindUp;
             interactTrigger.enabled = true;
-            boxCollision.isTrigger = false;
+            if (boxCollision != null)
+            {
+                boxCollision.isTrigger = false;
+            }
         }
 
         private void SwitchToFull()
@@ -808,7 +812,10 @@ namespace LethalPlaytime
             UpdateAnimationState();
             agent.speed = 4.5f;
             interactTrigger.enabled = false;
-            boxCollision.isTrigger = true;
+            if (boxCollision != null)
+            {
+                boxCollision.isTrigger = true;
+            }
         }
 
         private void SwitchToPartial()
@@ -820,7 +827,10 @@ namespace LethalPlaytime
             UpdateAnimationState();
             crankState = CrankStates.Static;
             interactTrigger.enabled = false;
-            boxCollision.isTrigger = true;
+            if (boxCollision != null)
+            {
+                boxCollision.isTrigger = true;
+            }
         }
 
         private void UpdateAnimationState()
@@ -958,7 +968,7 @@ namespace LethalPlaytime
                 PlayRandomHitConnectSound();
                 if (!debugEnemyAI)
                 {
-                    StartOfRound.Instance.localPlayerController.DamagePlayer(35, false, true, CauseOfDeath.Mauling);
+                    StartOfRound.Instance.localPlayerController.DamagePlayer(27, false, true, CauseOfDeath.Mauling);
                 }
             }
             else
@@ -1386,6 +1396,21 @@ namespace LethalPlaytime
             if (hitConnectSounds != null && hitConnectAudio != null)
             {
                 RoundManager.PlayRandomClip(hitConnectAudio, hitConnectSounds, true, 2);
+                StartCoroutine(SlashSoundDelay());
+            }
+        }
+
+        private IEnumerator SlashSoundDelay()
+        {
+            yield return (new WaitForSeconds(0.1f));
+            PlayRandomHitConnectslashSound();
+        }
+
+        public void PlayRandomHitConnectslashSound()
+        {
+            if (hitConnectSlashSounds != null && jumpAudio != null)
+            {
+                RoundManager.PlayRandomClip(jumpAudio, hitConnectSlashSounds, true, 2);
             }
         }
 

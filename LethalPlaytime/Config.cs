@@ -437,6 +437,12 @@ namespace LethalPlaytime
             boxyBooAIScript.fullRetractSounds = new AudioClip[1];
             boxyBooAIScript.fullRetractSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyRetractFull");
 
+            //Hit Connect Slash
+            boxyBooAIScript.hitConnectSlashSounds = new AudioClip[3];
+            boxyBooAIScript.hitConnectSlashSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyHitConnectSlash1");
+            boxyBooAIScript.hitConnectSlashSounds[1] = assetBundle.LoadAsset<AudioClip>("BoxyHitConnectSlash2");
+            boxyBooAIScript.hitConnectSlashSounds[2] = assetBundle.LoadAsset<AudioClip>("BoxyHitConnectSlash3");
+
             TerminalNode boxyBooTerminalNode = assetBundle.LoadAsset<TerminalNode>("Boxy Terminal Node");
             TerminalKeyword boxyBooTerminalKeyword = assetBundle.LoadAsset<TerminalKeyword>("Boxy Terminal Keyword");
             LethalLib.Modules.Utilities.FixMixerGroups(boxyBoo.enemyPrefab);
