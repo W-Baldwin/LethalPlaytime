@@ -40,7 +40,7 @@ namespace LethalPlaytime
         public static readonly int thresholdEnergy = 21;
         public float energy = 0;
         public bool reversing = false;
-        private static readonly int maxCrankBackwardsTime = 3;
+        private static readonly int maxCrankBackwardsTime = 2;
         private float crankBackwardsTime = 0;
 
         //Ability cooldowns
@@ -140,6 +140,15 @@ namespace LethalPlaytime
         //Box Collision
         public BoxCollider boxCollision;
 
+        //timeSinceTargetLOS
+        public bool checkingLastSeenPostion = false;
+        public float timeSinceSeeingTarget = 0;
+        public readonly float losTimeBasicChase = 6f;
+        public readonly float losTimeAdvancedChase = 9f;
+        public readonly float maxTimeCheckingLastSeenPosition = 12f;
+        public float timeCheckingLastSeenPosition = 0;
+        Vector3 lastSeenEnemyPosition;
+
 
         public override void Start()
         {
@@ -191,6 +200,7 @@ namespace LethalPlaytime
                 if (debugEnemyAI) { Debug.Log("Setting up interact trigger on clients."); }
                 BoxyBooSendStringClientRcp("SetupClientInteractTrigger");
             }
+            timeSinceSeeingTarget += AIIntervalTime;
             PlayerControllerB potentialTargetPlayer;
             switch (currentBehaviourStateIndex) 
             {
@@ -202,15 +212,17 @@ namespace LethalPlaytime
                         StopSearch(boxySearchRoutine, false);
                         return;
                     }
-                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(130, 25);
+                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(360, 2);
+                    if (potentialTargetPlayer == null) { potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25); }
                     if (potentialTargetPlayer != null && potentialTargetPlayer.isInsideFactory && !potentialTargetPlayer.isPlayerDead && !potentialTargetPlayer.inAnimationWithEnemy)
                     {
+                        timeSinceSeeingTarget = 0;
                         targetPlayer = potentialTargetPlayer;
                         SwitchToBehaviourState((int)BoxyStates.BasicChase);
                         BoxyBooSendStringClientRcp("SwitchToBasicChase");
                         return;
                     }
-                    if (!boxySearchRoutine.inProgress)
+                    if (!boxySearchRoutine.inProgress) //Only need to start search if there isn't immediately a player to target.
                     {
                         StartSearch(transform.position, boxySearchRoutine);
                     }
@@ -223,15 +235,17 @@ namespace LethalPlaytime
                         StopSearch(boxySearchRoutine, false);
                         return;
                     }
-                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(180, 35);
+                    potentialTargetPlayer = CheckLineOfSightForClosestPlayer(360, 3);
+                    if (potentialTargetPlayer == null) { potentialTargetPlayer = CheckLineOfSightForClosestPlayer(180, 32); }
                     if (potentialTargetPlayer != null && potentialTargetPlayer.isInsideFactory && !potentialTargetPlayer.isPlayerDead && !potentialTargetPlayer.inAnimationWithEnemy)
                     {
+                        timeSinceSeeingTarget = 0;
                         targetPlayer = potentialTargetPlayer;
                         SwitchToBehaviourState((int)BoxyStates.AdvancedChase);
                         BoxyBooSendStringClientRcp("SwitchToAdvancedChase");
                         return;
                     }
-                    if (!boxySearchRoutine.inProgress)
+                    if (!boxySearchRoutine.inProgress) //Only need to start search if there isn't immediately a player to target.
                     {
                         StartSearch(transform.position, boxySearchRoutine);
                     }
@@ -249,53 +263,73 @@ namespace LethalPlaytime
                     }
                     if (targetPlayer != null && !targetPlayer.isPlayerDead && targetPlayer.isInsideFactory && !targetPlayer.inAnimationWithEnemy)
                     {
+                        if (timeSinceSeeingTarget > losTimeBasicChase)
+                        {
+                            lastSeenEnemyPosition = targetPlayer.transform.position;
+                            checkingLastSeenPostion = true;
+                            targetPlayer = null;
+                            return; //We must return to prevent null distance checks, next interval goes into else branch to check last seen position.
+                        }
                         float distanceToCurrentTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
+                        bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
                         potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25);
-                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0) //ATTACK
+                        if (potentialTargetPlayer != targetPlayer && potentialTargetPlayer != null && Vector3.Distance(transform.position, potentialTargetPlayer.transform.position) < distanceToCurrentTargetPlayer)
+                        {
+                            timeSinceSeeingTarget = 0;
+                            targetPlayer = potentialTargetPlayer;
+                            distanceToCurrentTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position); //Recalculate distance to new target.
+                            lineOfSightToFinalTarget = true; //We just saw them, so we can see them.
+                        }
+                        if (distanceToCurrentTargetPlayer < 1.5f && !attacking && attackCooldown <= 0)
                         {
                             AttackRandom();
                             return;
                         }
-                        if (potentialTargetPlayer != targetPlayer && potentialTargetPlayer != null && Vector3.Distance(transform.position, potentialTargetPlayer.transform.position) < distanceToCurrentTargetPlayer)
-                        {
-                            TargetClosestPlayer(5, true, 150);
-                            targetPlayer = potentialTargetPlayer;
-                        }
                         SetDestinationToPosition(targetPlayer.transform.position);
-                        float finalDistanceToCurrentTarget = Vector3.Distance(transform.position, targetPlayer.transform.position);
-                        bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
                         if (lineOfSightToFinalTarget)
                         {
-                            if (finalDistanceToCurrentTarget > 26)
+                            timeSinceSeeingTarget = 0;
+                            if (distanceToCurrentTargetPlayer > 26) //Even if we can see them, if they have fleed sufficiently far enough away we should lose target.
                             {
                                 targetPlayer = null;
                             }
-                        }
-                        else if (finalDistanceToCurrentTarget > 20)
-                        {
-                            targetPlayer = null;
                         }
                     }
-                    else
+                    else //No valid player anymore, but could be checking last seen position.
                     {
-                        potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25);
-                        if (potentialTargetPlayer != null)
+                        if (checkingLastSeenPostion && Vector3.Distance(lastSeenEnemyPosition, transform.position) > 2)
                         {
-                            targetPlayer = potentialTargetPlayer;
-                        }
-                        else
-                        {
-                            if (energy > 2)
+                            timeCheckingLastSeenPosition += AIIntervalTime;
+                            if (timeCheckingLastSeenPosition > maxTimeCheckingLastSeenPosition)
                             {
-                                targetPlayer = null;
-                                SwitchToBehaviourState((int)BoxyStates.BasicSearch);
-                                BoxyBooSendStringClientRcp("SwitchToBasicSearch");
+                                checkingLastSeenPostion = false;
+                                timeCheckingLastSeenPosition = 0;
                             }
-                            else
+                            SetDestinationToPosition(lastSeenEnemyPosition);
+                        }
+                        else //We aren't checking for the last seen position anymore or we arrived close enough to that position.
+                        {
+                            checkingLastSeenPostion = false;
+                            timeCheckingLastSeenPosition = 0;
+                            potentialTargetPlayer = CheckLineOfSightForClosestPlayer(150, 25); //Last chance to see valid player before searching again.
+                            if (potentialTargetPlayer != null)
                             {
-                                targetPlayer = null;
-                                SwitchToBehaviourState((int)BoxyStates.Box);
-                                BoxyBooSendStringClientRcp("SwitchToBox");
+                                targetPlayer = potentialTargetPlayer;
+                            }
+                            else //No valid player on our last check and we aren't checking a last seen position.
+                            {
+                                if (energy > 2) //Switch to a chase if we have a meaningful amount of energy.
+                                {
+                                    targetPlayer = null;
+                                    SwitchToBehaviourState((int)BoxyStates.BasicSearch);
+                                    BoxyBooSendStringClientRcp("SwitchToBasicSearch");
+                                }
+                                else //Switch to box immediately if energy is too low for a meaningful search.
+                                {
+                                    targetPlayer = null;
+                                    SwitchToBehaviourState((int)BoxyStates.Box);
+                                    BoxyBooSendStringClientRcp("SwitchToBox");
+                                }
                             }
                         }
                     }
@@ -374,7 +408,7 @@ namespace LethalPlaytime
                         bool lineOfSightToFinalTarget = !Physics.Linecast(eye.transform.position, targetPlayer.gameplayCamera.transform.position, StartOfRound.Instance.collidersAndRoomMaskAndDefault);
                         if (lineOfSightToFinalTarget)
                         {
-                            if (finalDistanceToCurrentTarget > 26)
+                            if (finalDistanceToCurrentTarget > 31)
                             {
                                 targetPlayer = null;
                             }
@@ -688,7 +722,7 @@ namespace LethalPlaytime
             partial = false;
             full = true;
             UpdateAnimationState();
-            agent.speed = 6.5f;
+            agent.speed = 6f;
             attacking = false;
             attackCooldown = maxAttackCooldown * 1.5f;
             crankState = CrankStates.FastSpin;
@@ -723,7 +757,7 @@ namespace LethalPlaytime
                 partial = false;
                 full = true;
                 UpdateAnimationState();
-                agent.speed = 6;
+                agent.speed = 5.5f;
                 crankState = CrankStates.NormalSpin;
             }
         }
@@ -1093,13 +1127,13 @@ namespace LethalPlaytime
             switch (currentBehaviourStateIndex)
             {
                 case (int)BoxyStates.AdvancedChase:
-                    agent.speed = 6.5f;
+                    agent.speed = 6f;
                     break;
                 case (int)BoxyStates.AdvancedSearch:
                     agent.speed = 5;
                     break;
                 case (int)BoxyStates.BasicChase:
-                    agent.speed = 6.0f;
+                    agent.speed = 5.5f;
                     break;
                 case (int)BoxyStates.BasicSearch:
                     agent.speed = 4;
@@ -1131,7 +1165,7 @@ namespace LethalPlaytime
             {
                 if (box && energy < 22)
                 {
-                    energy -= 5;
+                    energy -= 2;
                     if (energy < 0)
                     {
                         energy = 0;
