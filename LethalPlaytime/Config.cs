@@ -70,8 +70,8 @@ namespace LethalPlaytime
             huggyWuggyRarity = rarityEntryHuggyWuggy.Value;
             var rarityEntryDogdayMonster = Instance.CreateIntSliderConfig("Monster Dogday", 40, "Adjust how often you see Dogday.", 0, 100, "Creatures");
             dogdayMonsterRarity = rarityEntryDogdayMonster.Value;
-            var rarityEntryBoxyBoo = Instance.CreateIntSliderConfig("Boxy Boo", 30, "Adjust how often you see Boxy Boo.", 0, 100, "Creatures");
-            dogdayMonsterRarity = rarityEntryBoxyBoo.Value;
+            var rarityEntryBoxyBoo = Instance.CreateIntSliderConfig("Boxy Boo", 35, "Adjust how often you see Boxy Boo.", 0, 100, "Creatures");
+            boxyBooMonsterRarity = rarityEntryBoxyBoo.Value;
         }
 
         private static void ConfigureAndRegisterMissDelight()
