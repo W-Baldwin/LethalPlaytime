@@ -227,7 +227,7 @@ namespace LethalPlaytime
             {
                 if (stareMeter > 0)
                 {
-                    stareMeter -= Time.deltaTime * stareMeterReductionMultiplier;
+                    stareMeter -= (Time.deltaTime * (stareMeterReductionMultiplier + (swingCount * 0.2f)));
                 }
                 if (stareMeter <= 0 && overrideFreeze)
                 {

@@ -119,7 +119,7 @@ namespace LethalPlaytime
                         }
                         SetDestinationToPosition(targetPlayer.transform.position);
                         float distanceToFinalTargetPlayer = Vector3.Distance(transform.position, targetPlayer.transform.position);
-                        if (distanceToFinalTargetPlayer < 1.4f && !attacking && attackCooldown <= 0)
+                        if (distanceToFinalTargetPlayer < 1.35f && !attacking && attackCooldown <= 0)
                         {
                             DogdaySendStringClientRcp("Attacking");
                         }
@@ -131,12 +131,12 @@ namespace LethalPlaytime
                                 targetPlayer = null;
                             }
                         }
-                        else if (distanceToFinalTargetPlayer > 20)
+                        else if (distanceToFinalTargetPlayer > 17)
                         {
                             targetPlayer = null;
                         }
                     }
-                    else
+                    else //No valid target player.
                     {
                         PlayerControllerB newPotentialTarget = CheckLineOfSightForClosestPlayer(180, 23);
                         if (newPotentialTarget != null)

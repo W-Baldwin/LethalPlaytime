@@ -31,8 +31,8 @@ namespace LethalPlaytime
         public float currentWanderingTime = 0;
 
         //Frustration meter.
-        private readonly float maxFrustration = 3.5f;
-        public float currentFrustration = 4;
+        private readonly float maxFrustration = 3f;
+        public float currentFrustration = 2f;
 
         //Saved positions.
         Vector3 idealHidingSpotPosition;
@@ -99,6 +99,11 @@ namespace LethalPlaytime
 
         //Sitting Collision Box
         public BoxCollider sitCollisionArea;
+
+        //Charging Extra STuff
+        public bool hasPlayedRoarRecently = false;
+        private readonly float maxTimeBetweenRoars = 35;
+        public float timeBetweenRoars = 0;
 
 
         public override void Start()
@@ -273,13 +278,13 @@ namespace LethalPlaytime
                         {
                             StartSearch(transform.position, huggySearch);
                         }
-                        PlayerControllerB potentialChargeTarget = CheckLineOfSightForClosestPlayer(150, 23);
+                        PlayerControllerB potentialChargeTarget = CheckLineOfSightForClosestPlayer(150, 25);
                         if (potentialChargeTarget != null && !potentialChargeTarget.isPlayerDead && potentialChargeTarget.isInsideFactory && !potentialChargeTarget.inSpecialInteractAnimation)
                         {
                             ScareClientAmount(potentialChargeTarget.actualClientId, 0.75f);
                             StopSearch(huggySearch);
                             SwitchToCharging();
-                            TargetClosestPlayer(0, true, 360);
+                            targetPlayer = potentialChargeTarget;
                             return;
                         }
                     }
@@ -287,30 +292,42 @@ namespace LethalPlaytime
                     {
                         if (targetPlayer != null && !targetPlayer.inSpecialInteractAnimation && !targetPlayer.isPlayerDead && targetPlayer.isInsideFactory)
                         {
-                            if (Vector3.Distance(targetPlayer.transform.position, transform.position) > 27)
+                            float currentDistanceToTarget = Vector3.Distance(targetPlayer.transform.position, transform.position);
+                            PlayerControllerB betterTarget = CheckLineOfSightForClosestPlayer(150, 25);
+                            if (betterTarget != null && !betterTarget.isPlayerDead && betterTarget.isInsideFactory && !betterTarget.inSpecialInteractAnimation)
+                            {
+                                float betterTargetDistance = Vector3.Distance(betterTarget.transform.position, transform.position);
+                                if (betterTargetDistance < currentDistanceToTarget) // Found a better (closer) target
+                                {
+                                    targetPlayer = betterTarget;
+                                    currentDistanceToTarget = betterTargetDistance; // Update current distance to the new target
+                                }
+                            }
+                            if (currentDistanceToTarget > 27)
                             {
                                 PlayerControllerB potentialChargeTarget = CheckLineOfSightForClosestPlayer(360, 24);
                                 if (potentialChargeTarget != null && !potentialChargeTarget.isPlayerDead && potentialChargeTarget.isInsideFactory && !potentialChargeTarget.inSpecialInteractAnimation)
                                 {
-                                    TargetClosestPlayer(0, true, 360);
+                                    targetPlayer = potentialChargeTarget;
                                     return;
                                 }
+                                targetPlayer = null;
                                 charging = false;
                                 return;
                             }
-                            SetDestinationToPosition(targetPlayer.transform.position, true);
-                            if (Vector3.Distance(targetPlayer.transform.position, this.transform.position) < 1.4f && canJumpscare)
+                            SetDestinationToPosition(targetPlayer.transform.position);
+                            if (currentDistanceToTarget < 1.4f && canJumpscare)
                             {
                                 ScareClientAmount(targetPlayer.actualClientId, 1.0f);
                                 SwitchToJumpscare(targetPlayer.actualClientId);
                             }
                         }
-                        else
+                        else //No more valid target
                         {
                             PlayerControllerB potentialChargeTarget = CheckLineOfSightForClosestPlayer(360, 24);
-                            if (potentialChargeTarget != null)
+                            if (potentialChargeTarget != null && !potentialChargeTarget.isPlayerDead && !potentialChargeTarget.inAnimationWithEnemy)
                             {
-                                TargetClosestPlayer(0, true, 360);
+                                targetPlayer = potentialChargeTarget;
                                 return;
                             }
                             else
@@ -363,6 +380,14 @@ namespace LethalPlaytime
         public override void Update()
         {
             base.Update();
+            if (hasPlayedRoarRecently)
+            {
+                timeBetweenRoars += Time.deltaTime;
+                if (timeBetweenRoars > maxTimeBetweenRoars)
+                {
+                    hasPlayedRoarRecently = false;
+                }
+            }
             if (targetPlayer != null && attacking && targetPlayer.isInsideFactory && !targetPlayer.isPlayerDead)
             {
                 Vector3 diff = targetPlayer.transform.position - this.transform.position;
@@ -428,7 +453,7 @@ namespace LethalPlaytime
                 case (int)HuggyStates.Enrage:
                     if (!inSpecialAnimation)
                     {
-                        currentStamina -= Time.deltaTime/3; //Effectively 60s (20s - deltaTime/3)
+                        currentStamina -= Time.deltaTime/4; //Effectively 80s (20s - deltaTime/3)
                     }
                     break;
                 case (int)HuggyStates.Retreat:
@@ -663,9 +688,19 @@ namespace LethalPlaytime
 
         private void SwitchToCharging()
         {
-            HuggySendStringClientRcp("Charge");
-            creatureAnimator.SetTrigger("Charge");
-            agent.speed = 0;
+            if (!hasPlayedRoarRecently)
+            {
+                HuggySendStringClientRcp("ChargeRoar");
+                creatureAnimator.SetTrigger("Charge");
+                hasPlayedRoarRecently = true;
+                agent.speed = 0; //To prepare for the roar.
+            }
+            else //Has played, skip to animation state named "ChargeHuggy" that is just his running animation after the roar that would normally happen with the Charge Trigger.
+            {
+                HuggySendStringClientRcp("Charge");
+                creatureAnimator.CrossFade("ChargeHuggy", 0.15f);
+                SetStatsAfterRoaring();
+            }
             forward = true;
             running = false;
             charging = true;
@@ -975,6 +1010,8 @@ namespace LethalPlaytime
                 inSpecialAnimationWithPlayer.disableLookInput = false;
                 inSpecialAnimationWithPlayer = null;
                 changeInAnimationStateNeeded = true;
+                hasPlayedRoarRecently = false;
+                timeBetweenRoars = 0;
             }
             waitingRoutine = StartCoroutine(WaitAfterJumpscare());         
         }
@@ -1136,10 +1173,12 @@ namespace LethalPlaytime
                     forward = true;
                     creatureAnimator.SetTrigger(informationString);
                     break;
-                case "Charge":
+                case "ChargeRoar":
                     creatureAnimator.SetTrigger(informationString);
                     break;
-                
+                case "Charge":
+                    creatureAnimator.CrossFade("ChargeHuggy", 0.15f);
+                    break;
             }
         }
 

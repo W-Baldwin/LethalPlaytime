@@ -418,22 +418,22 @@ namespace LethalPlaytime
                             targetPlayer = null;
                         }
                     }
-                    else
+                    else  //No current valid target branch
                     {
                         potentialTargetPlayer = CheckLineOfSightForClosestPlayer(360, 25);
                         if (potentialTargetPlayer != null)
                         {
                             targetPlayer = potentialTargetPlayer;
                         }
-                        else
+                        else //There is no more valid targets in visible range, return to search.
                         {
-                            if (energy > 2)
+                            if (energy > 2) //Search if we still have some energy.
                             {
                                 targetPlayer = null;
                                 SwitchToBehaviourState((int)BoxyStates.AdvancedSearch);
                                 BoxyBooSendStringClientRcp("SwitchToAdvancedSearch");
                             }
-                            else
+                            else //Enter box if we have a insignificant amount of energy.
                             {
                                 targetPlayer = null;
                                 SwitchToBehaviourState((int)BoxyStates.Box);
@@ -600,9 +600,11 @@ namespace LethalPlaytime
         private IEnumerator Leap()
         {
             Vector3 startingPosition = transform.position;
+            float startingYPosition = startingPosition.y;
             float distanceToDestination = Vector3.Distance(startingPosition, landingPosition);
+            float currentDistanceToDestination = distanceToDestination;
             float timeTaken = 0;
-            while (distanceToDestination > 0.2f && timeTaken < 0.75)
+            while (currentDistanceToDestination > 0.2f && timeTaken < 0.75)
             {
                 //Move towards the landing position by predetermined amount jumpspeed
                 //transform.position = Vector3.MoveTowards(transform.position, landingPosition, Time.deltaTime * jumpSpeed * 4);
@@ -611,11 +613,11 @@ namespace LethalPlaytime
                 diff.y = 0;
                 Quaternion targetLook = Quaternion.LookRotation(diff);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetLook, Time.deltaTime * 10);
-                distanceToDestination = Vector3.Distance(transform.position, landingPosition);
+                currentDistanceToDestination = Vector3.Distance(transform.position, landingPosition);
                 timeTaken += Time.deltaTime;
                 yield return null;
             }
-            if (distanceToDestination <= 0.15f) {
+            if (currentDistanceToDestination <= 0.15f) {
                 if (!agent.isOnNavMesh)
                 {
                     FindAndSetValidNavMeshPosition();
@@ -1430,14 +1432,8 @@ namespace LethalPlaytime
             if (hitConnectSounds != null && hitConnectAudio != null)
             {
                 RoundManager.PlayRandomClip(hitConnectAudio, hitConnectSounds, true, 2);
-                StartCoroutine(SlashSoundDelay());
+                PlayRandomHitConnectslashSound();
             }
-        }
-
-        private IEnumerator SlashSoundDelay()
-        {
-            yield return (new WaitForSeconds(0.1f));
-            PlayRandomHitConnectslashSound();
         }
 
         public void PlayRandomHitConnectslashSound()
