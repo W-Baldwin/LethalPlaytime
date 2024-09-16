@@ -489,9 +489,8 @@ namespace LethalPlaytime
                 {
                     PlayRandomHitConnectSound();
                     StartOfRound.Instance.localPlayerController.DamagePlayer(25, false, true, CauseOfDeath.Mauling);
-                    StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.8f, false);
+                    StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.8f, true);
                     StartOfRound.Instance.localPlayerController.DropBlood();
-                    
                 }
             }
         }

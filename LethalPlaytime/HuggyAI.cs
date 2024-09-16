@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -318,8 +319,8 @@ namespace LethalPlaytime
                             SetDestinationToPosition(targetPlayer.transform.position);
                             if (currentDistanceToTarget < 1.4f && canJumpscare)
                             {
-                                ScareClientAmount(targetPlayer.actualClientId, 1.0f);
                                 SwitchToJumpscare(targetPlayer.actualClientId);
+                                ScareClientAmount(targetPlayer.actualClientId, 1.0f);
                             }
                         }
                         else //No more valid target
@@ -485,17 +486,17 @@ namespace LethalPlaytime
             if (distanceFromHuggy < 5)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.VeryStrong);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(1.0f, false);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(1.0f, true);
             }
             else if (distanceFromHuggy < 11)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.Big);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.7f, false);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.7f, true);
             }
             else if (distanceFromHuggy < 25)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.Small);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.35f, false);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.35f, true);
             }
         }
 
@@ -690,14 +691,14 @@ namespace LethalPlaytime
         {
             if (!hasPlayedRoarRecently)
             {
-                HuggySendStringClientRcp("ChargeRoar");
+                if (IsHost || IsServer) { HuggySendStringClientRcp("ChargeRoar"); }
                 creatureAnimator.SetTrigger("Charge");
                 hasPlayedRoarRecently = true;
                 agent.speed = 0; //To prepare for the roar.
             }
             else //Has played, skip to animation state named "ChargeHuggy" that is just his running animation after the roar that would normally happen with the Charge Trigger.
             {
-                HuggySendStringClientRcp("Charge");
+                if (IsHost || IsServer) { HuggySendStringClientRcp("Charge"); }
                 creatureAnimator.CrossFade("ChargeHuggy", 0.15f);
                 SetStatsAfterRoaring();
             }
@@ -937,8 +938,9 @@ namespace LethalPlaytime
             {
                 HuggySendStringClientRcp("Jumpscare");
                 HuggySendStringClientRcp("Jumpscare:" + playerID.ToString());
-                creatureAnimator.SetTrigger("Jumpscare");
+                
             }
+            creatureAnimator.SetTrigger("Jumpscare");
             RoundManager.PlayRandomClip(creatureSFX, jumpscareClips, default, 1.5f);
             agent.speed = 0;
             currentFrustration = 0;
@@ -1082,13 +1084,18 @@ namespace LethalPlaytime
                 {
                     amount = 1;
                 }
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(amount, false);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(amount, true);
             }
         }
 
         private void ScareClientAmount(ulong clientID, float amount)
         {
-            string toSendOff = "ScareClient:" + clientID.ToString() + "," + amount.ToString();
+            if (clientID == StartOfRound.Instance.localPlayerController.actualClientId && IsHost)
+            {
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(amount, true);
+                return;
+            }
+            string toSendOff = "ScareClient:" + clientID.ToString(CultureInfo.InvariantCulture) + "," + amount.ToString(CultureInfo.InvariantCulture);
             HuggySendStringClientRcp(toSendOff);
         }
 
@@ -1151,14 +1158,16 @@ namespace LethalPlaytime
                 string remainingString = informationString.Replace("Jumpscare:", "");
                 ulong clientID = (ulong)int.Parse(remainingString);
                 SwitchToJumpscare(clientID);
+                Debug.Log($"Switched To Jumpscare IsClient?: {IsClient}");
             }
             if (informationString.Contains("ScareClient:"))
             {
                 string[] remainingStringScared = informationString.Replace("ScareClient:", "").Split(",");
                 if (remainingStringScared.Length == 2)
                 {
-                    ulong clientIDScared = (ulong)int.Parse(remainingStringScared[0]);
-                    ProcessScareClientAmount(clientIDScared, (float)double.Parse(remainingStringScared[1]));
+                    ulong clientIDScared = ulong.Parse(remainingStringScared[0], CultureInfo.InvariantCulture);
+                    float amount = float.Parse(remainingStringScared[1], CultureInfo.InvariantCulture);
+                    ProcessScareClientAmount(clientIDScared, amount);
                 }
             }
             switch (informationString)
@@ -1178,10 +1187,14 @@ namespace LethalPlaytime
                     creatureAnimator.SetTrigger(informationString);
                     break;
                 case "ChargeRoar":
+                    hasPlayedRoarRecently = false;
+                    SwitchToCharging();
                     creatureAnimator.SetTrigger(informationString);
                     break;
                 case "Charge":
-                    creatureAnimator.CrossFade("ChargeHuggy", 0.15f);
+                    hasPlayedRoarRecently = true;
+                    SwitchToCharging();
+                    //creatureAnimator.CrossFade("ChargeHuggy", 0.15f);
                     break;
             }
         }

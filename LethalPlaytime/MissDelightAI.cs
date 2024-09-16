@@ -511,7 +511,7 @@ namespace LethalPlaytime
                 {
                     fearLevel = 1;
                 }
-                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(fearLevel, false);
+                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(fearLevel, true);
             }
         }
 
@@ -524,7 +524,7 @@ namespace LethalPlaytime
                     SwitchToBehaviourState(2);
                     reservedAgentMovementSpeed = agent.speed;
                     agent.speed = 0;
-                    ScareClosePlayer(2.5f, 0.7f);
+                    ScareClosePlayer(3f, 0.7f);
                     break;
                 case "exitSwing":
                     creatureAnimator.SetTrigger(animationName);
@@ -578,7 +578,7 @@ namespace LethalPlaytime
             if (Vector3.Distance(transform.position, StartOfRound.Instance.localPlayerController.transform.position) < 20f)
             {
                 RoundManager.Instance.FlickerLights(flickerFlashlights: true, disableFlashlights: false);
-                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(0.3f, false);
+                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(0.3f, true);
             }
         }
 
