@@ -485,17 +485,17 @@ namespace LethalPlaytime
             if (distanceFromHuggy < 5)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.VeryStrong);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(1.0f);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(1.0f, false);
             }
             else if (distanceFromHuggy < 11)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.Big);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.7f);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.7f, false);
             }
             else if (distanceFromHuggy < 25)
             {
                 HUDManager.Instance.ShakeCamera(ScreenShakeType.Small);
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.35f);
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.35f, false);
             }
         }
 
@@ -1078,13 +1078,17 @@ namespace LethalPlaytime
         {
             if (StartOfRound.Instance.localPlayerController.actualClientId == clientID)
             {
-                StartOfRound.Instance.localPlayerController.JumpToFearLevel(amount);
+                if (amount > 1)
+                {
+                    amount = 1;
+                }
+                StartOfRound.Instance.localPlayerController.JumpToFearLevel(amount, false);
             }
         }
 
         private void ScareClientAmount(ulong clientID, float amount)
         {
-            string toSendOff = "Scare:" + clientID.ToString() + "," + amount.ToString();
+            string toSendOff = "ScareClient:" + clientID.ToString() + "," + amount.ToString();
             HuggySendStringClientRcp(toSendOff);
         }
 
@@ -1148,9 +1152,9 @@ namespace LethalPlaytime
                 ulong clientID = (ulong)int.Parse(remainingString);
                 SwitchToJumpscare(clientID);
             }
-            if (informationString.Contains("Scare:"))
+            if (informationString.Contains("ScareClient:"))
             {
-                string[] remainingStringScared = informationString.Replace("Scare:", "").Split(",");
+                string[] remainingStringScared = informationString.Replace("ScareClient:", "").Split(",");
                 if (remainingStringScared.Length == 2)
                 {
                     ulong clientIDScared = (ulong)int.Parse(remainingStringScared[0]);

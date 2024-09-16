@@ -507,7 +507,11 @@ namespace LethalPlaytime
             float distanceToTarget = Vector3.Distance(base.transform.position, GameNetworkManager.Instance.localPlayerController.transform.position);
             if (distanceToTarget < distance)
             {
-                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(fearLevel);
+                if (fearLevel > 1)
+                {
+                    fearLevel = 1;
+                }
+                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(fearLevel, false);
             }
         }
 
@@ -574,7 +578,7 @@ namespace LethalPlaytime
             if (Vector3.Distance(transform.position, StartOfRound.Instance.localPlayerController.transform.position) < 20f)
             {
                 RoundManager.Instance.FlickerLights(flickerFlashlights: true, disableFlashlights: false);
-                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(0.3f);
+                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(0.3f, false);
             }
         }
 

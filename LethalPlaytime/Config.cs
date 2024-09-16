@@ -32,17 +32,17 @@ namespace LethalPlaytime
         private static int dogdayMonsterRarity;
         private static int boxyBooMonsterRarity;
 
-        public static void ConfigureAndRegisterAssets(LethalPlaytime Instance)
+        public static void ConfigureAndRegisterAssets(LethalPlaytime Instance, ManualLogSource Logger)
         {
             LoadAssets();
-            CreateConfigEntries(Instance);
+            CreateConfigEntries(Instance, Logger);
             ConfigureAndRegisterMissDelight();
             ConfigureAndRegisterHuggyWuggy();
             ConfigureAndRegisterDogday();
             ConfigureAndRegisterBoxyBoo();
         }
 
-        internal static void CreateConfigEntries(LethalPlaytime Instance)
+        internal static void CreateConfigEntries(LethalPlaytime Instance, ManualLogSource Logger)
         {
             //Enumerated way to register creatures.
             var configEntryForScrapMethod = Instance.Config.Bind("Creatures", "Registration Method", RarityAddTypes.All
@@ -64,14 +64,18 @@ namespace LethalPlaytime
                     break;
             }
 
-            var rarityEntryMissDelight = Instance.CreateIntSliderConfig("Miss Delight", 50, "Adjust how often you see the enemy Miss Delight.", 0, 100, "Creatures");
+            var rarityEntryMissDelight = Instance.CreateIntSliderConfig("Miss Delight", 65, "Adjust how often you see the enemy Miss Delight.", 0, 400, "Creatures");
             missDelightRarity = rarityEntryMissDelight.Value;
-            var rarityEntryHuggyWuggy = Instance.CreateIntSliderConfig("Huggy Wuggy", 40, "Adjust how often you see Huggy Wuggy.", 0, 100, "Creatures");
+            var rarityEntryHuggyWuggy = Instance.CreateIntSliderConfig("Huggy Wuggy", 55, "Adjust how often you see Huggy Wuggy.", 0, 400, "Creatures");
             huggyWuggyRarity = rarityEntryHuggyWuggy.Value;
-            var rarityEntryDogdayMonster = Instance.CreateIntSliderConfig("Monster Dogday", 40, "Adjust how often you see Dogday.", 0, 100, "Creatures");
+            var rarityEntryDogdayMonster = Instance.CreateIntSliderConfig("Monster Dogday", 55, "Adjust how often you see Dogday.", 0, 400, "Creatures");
             dogdayMonsterRarity = rarityEntryDogdayMonster.Value;
-            var rarityEntryBoxyBoo = Instance.CreateIntSliderConfig("Boxy Boo", 35, "Adjust how often you see Boxy Boo.", 0, 100, "Creatures");
+            var rarityEntryBoxyBoo = Instance.CreateIntSliderConfig("Boxy Boo", 55, "Adjust how often you see Boxy Boo.", 0, 400, "Creatures");
             boxyBooMonsterRarity = rarityEntryBoxyBoo.Value;
+            Logger.LogInfo("Miss Delight rarity set to: " + missDelightRarity);
+            Logger.LogInfo("Huggy Wuggy rarity set to: " + huggyWuggyRarity);
+            Logger.LogInfo("Dogday rarity set to: " + dogdayMonsterRarity);
+            Logger.LogInfo("Boxy Boo rarity set to: " + boxyBooMonsterRarity);
         }
 
         private static void ConfigureAndRegisterMissDelight()
@@ -170,11 +174,6 @@ namespace LethalPlaytime
             huggyWuggyAIScript.weaponSwingCheckArea = huggyWuggy.enemyPrefab.transform.Find("AttackCollisionArea").GetComponent<BoxCollider>();
             huggyWuggyAIScript.sitCollisionArea = huggyWuggy.enemyPrefab.transform.Find("SitCollision").GetComponent<BoxCollider>();
 
-            TerminalNode huggyWuggyTerminalNode = assetBundle.LoadAsset<TerminalNode>("Huggy Wuggy Terminal Node");
-            TerminalKeyword huggyWuggyTerminalKeyword = assetBundle.LoadAsset<TerminalKeyword>("Huggy Wuggy Terminal Keyword");
-            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(huggyWuggy.enemyPrefab);
-            LethalLib.Modules.Enemies.RegisterEnemy(huggyWuggy, huggyWuggyRarity, chosenRegistrationMethod, huggyWuggyTerminalNode, huggyWuggyTerminalKeyword);
-
             //Audio configuration for Huggy
             //Custom audio sources already configured above.
             //Footstep Clips
@@ -229,6 +228,11 @@ namespace LethalPlaytime
             //Jumpscare
             huggyWuggyAIScript.jumpscareClips = new AudioClip[1];
             huggyWuggyAIScript.jumpscareClips[0] = assetBundle.LoadAsset<AudioClip>("Huggie_Jumpscare");
+
+            TerminalNode huggyWuggyTerminalNode = assetBundle.LoadAsset<TerminalNode>("Huggy Wuggy Terminal Node");
+            TerminalKeyword huggyWuggyTerminalKeyword = assetBundle.LoadAsset<TerminalKeyword>("Huggy Wuggy Terminal Keyword");
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(huggyWuggy.enemyPrefab);
+            LethalLib.Modules.Enemies.RegisterEnemy(huggyWuggy, huggyWuggyRarity, chosenRegistrationMethod, huggyWuggyTerminalNode, huggyWuggyTerminalKeyword);
         }
 
         private static void ConfigureAndRegisterDogday()
@@ -402,7 +406,7 @@ namespace LethalPlaytime
 
             //Land
             boxyBooAIScript.landSounds = new AudioClip[1];
-            boxyBooAIScript.leapSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyMetal1");
+            boxyBooAIScript.landSounds[0] = assetBundle.LoadAsset<AudioClip>("BoxyMetal1");
 
             //Music
             boxyBooAIScript.musicTrackSounds = new AudioClip[2];

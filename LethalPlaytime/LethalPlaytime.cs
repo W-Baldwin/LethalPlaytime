@@ -29,7 +29,7 @@ namespace LethalPlaytime
             NetcodePatcher();
             Patch();
 
-            PlaytimeConfig.ConfigureAndRegisterAssets(Instance);
+            PlaytimeConfig.ConfigureAndRegisterAssets(Instance, Logger);
 
             
 

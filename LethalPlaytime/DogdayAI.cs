@@ -391,7 +391,7 @@ namespace LethalPlaytime
             if (creatureVoice != null && deathSounds != null)
             {
                 creatureVoice.pitch = (float)(1 - rng.NextDouble() / 14);
-                RoundManager.PlayRandomClip(creatureVoice, deathSounds, true, 3);
+                RoundManager.PlayRandomClip(creatureVoice, deathSounds, true, 1.5f);
             }
         }
 
@@ -489,7 +489,7 @@ namespace LethalPlaytime
                 {
                     PlayRandomHitConnectSound();
                     StartOfRound.Instance.localPlayerController.DamagePlayer(25, false, true, CauseOfDeath.Mauling);
-                    StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.8f, true);
+                    StartOfRound.Instance.localPlayerController.JumpToFearLevel(0.8f, false);
                     StartOfRound.Instance.localPlayerController.DropBlood();
                     
                 }
